@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,149 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  password    String   @db.VarChar(255)
+  role        Int      @default(2) // 1 = admin, 2 = user
+  phoneNumber String?  @unique @map("phone_number") @db.VarChar(20)
+  email       String   @unique @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  wallets          Wallet[]
+  categories       Category[]
+  transactions     Transaction[]
+  budgetTemplates  BudgetTemplate[]
+  telegram         Telegram?
+  activityLogs     ActivityLog[]
+
+  @@map("users")
+}
+
+model Telegram {
+  userId              String    @id @map("user_id") @db.Uuid
+  chatId              BigInt?   @unique @map("chat_id")
+  linkToken           String?   @map("link_token") @db.VarChar(100)
+  linkTokenExpiresAt  DateTime? @map("link_token_expires_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("telegrams")
+}
+
+model Wallet {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  balance   Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Category {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @map("user_id") @db.Uuid
+  name      String          @db.VarChar(255)
+  type      TransactionType
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  budgetTemplates  BudgetTemplate[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id              String          @id @default(uuid()) @db.Uuid
+  userId          String          @map("user_id") @db.Uuid
+  walletId        String          @map("wallet_id") @db.Uuid
+  categoryId      String          @map("category_id") @db.Uuid
+  amount          Decimal         @db.Decimal(14, 2)
+  type            TransactionType
+  description     String?         @db.VarChar(255)
+  transactionDate DateTime        @default(now()) @map("transaction_date") @db.Date
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet   Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+model BudgetTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  amount      Decimal  @db.Decimal(15, 2)
+  frequency   String   @default("monthly") @db.VarChar(20)
+  isRecurring Boolean  @default(true) @map("is_recurring")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  instances BudgetInstance[]
+
+  @@index([userId])
+  @@map("budget_templates")
+}
+
+model BudgetInstance {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @map("template_id") @db.Uuid
+  periodStart DateTime @map("period_start") @db.Date
+  periodEnd   DateTime @map("period_end") @db.Date
+  spent       Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  template BudgetTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([periodStart, periodEnd])
+  @@map("budget_instances")
+}
+
+model Otp {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @db.VarChar(255)
+  code      String   @db.VarChar(6)
+  purpose   String   @default("register") @db.VarChar(20)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email, purpose, used, createdAt])
+  @@map("otps")
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  description String
+  readAt      DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activity_logs")
 }
