@@ -1,6 +1,6 @@
-import { ok } from './common/response';
 import { Controller, Dependencies, Get } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
+import { ok } from './common/utils';
+import { PrismaService } from './prisma.service';
 
 @Controller('health')
 @Dependencies(PrismaService)
