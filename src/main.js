@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
-import { loggerMiddleware } from './common/middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,7 +10,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.use(loggerMiddleware);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('MoneySecurity API')
