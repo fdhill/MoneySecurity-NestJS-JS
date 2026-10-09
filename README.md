@@ -38,10 +38,17 @@ src/
   main.js               bootstrap: prefix /api, ValidationPipe, filter, Swagger
   app.module.js
   health.controller.js  GET /api/health (ngecek DB lewat $queryRaw)
-  prisma/               PrismaModule (@Global) + PrismaService
-  common/
-    response.js         ok(message, data) -> { success, message, data }
-    filters/            semua error jadi { success:false, message, data:null }
+  prisma.module.js      PrismaModule (@Global)
+  prisma.service.js     PrismaService wrapper
+  exceptions/           AppException + turunannya (400/401/403/404/409)
+  filters/              AllExceptionsFilter -> { success:false, message, data:null }
+  utils/                response.js: ok/created/fail -> { success, message, data }
+  controllers/          HTTP handler per endpoint
+  services/             business logic
+  repositories/         akses DB via Prisma
+  dtos/                 validation schema (class-validator)
+  routes/               definisi route
+  database/             seed & helper database
   generated/prisma/     hasil prisma generate (gitignored)
 ```
 
