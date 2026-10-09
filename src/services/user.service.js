@@ -1,5 +1,5 @@
 import { hash } from 'bcryptjs';
-import { NotFoundException, BadRequestException } from '../common/exceptions';
+import { NotFoundException, BadRequestException } from '../exceptions';
 import { UserRepository } from '../repositories/user.repository';
 
 export class UserService {
