@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ok, created } from '../common/utils';
+import { ok, created } from '../utils';
 
 @ApiTags('users')
 @ApiBearerAuth()
